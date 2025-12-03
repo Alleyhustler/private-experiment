@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Private Experiment // Control</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Switched to Inter and Roboto Mono for a clean, scientific look -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-body: #0f0f11;
+      --bg-panel: #18181b;
+      --bg-element: #232328;
+      
+      --accent-color: #3b82f6; /* Clean System Blue */
+      --accent-hover: #2563eb;
+      --text-main: #f4f4f5;
+      --text-muted: #a1a1aa;
+      
+      --border-color: #27272a;
+      --border-active: #3b82f6;
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      height: 100vh;
+      overflow: hidden; 
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* --- Header --- */
+    header {
+      height: 60px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 1.5rem;
+      background: var(--bg-panel);
+      flex-shrink: 0;
+    }
+    
+    .logo {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .top-actions { display: flex; gap: 10px; }
+    
+    .btn {
+      background: var(--bg-element);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .btn:hover { background: #2d2d35; }
+    
+    .btn-primary { 
+      background: var(--accent-color); 
+      border-color: var(--accent-color);
+      color: white; 
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    /* --- Layout --- */
+    .app-container {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      flex: 1;
+      height: calc(100vh - 60px);
+    }
+
+    /* --- Sidebar --- */
+    .sidebar {
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border-color);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      overflow-y: auto;
+    }
+
+    .panel {
+      background: var(--bg-element);
+      border: 1px solid var(--border-color);
+      padding: 1.2rem;
+      border-radius: 6px;
+    }
+
+    .panel-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 0.8rem;
+      display: block;
+      letter-spacing: 0.5px;
+    }
+
+    .jackpot-val {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 2.5rem;
+      font-weight: 500;
+      color: white;
+      line-height: 1;
+    }
+    
+    .timer-display {
+      margin-top: 8px;
+      color: var(--text-muted);
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.9rem;
+    }
+    .timer-display span { color: var(--accent-color); }
+
+    /* Graph */
+    .graph-container {
+      height: 120px;
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      padding-top: 10px;
+    }
+    .bar {
+      flex: 1;
+      background: #3f3f46;
+      border-radius: 2px 2px 0 0;
+      transition: height 0.3s;
+    }
+    .bar.high-prob { background: var(--accent-color); }
+
+    /* Action Area */
+    .action-area {
+      margin-top: auto;
+      text-align: center;
+    }
+    .selected-box-info {
+      font-size: 0.9rem;
+      margin-bottom: 12px;
+      color: var(--text-muted);
+    }
+    .selected-box-info span { color: white; font-weight: 600; font-family: 'Roboto Mono', monospace; }
+    
+    .btn-vote {
+      width: 100%;
+      padding: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    /* --- Game Grid --- */
+    .game-area {
+      padding: 2rem;
+      background-color: var(--bg-body);
+      overflow-y: auto;
+    }
+
+    .area-header { margin-bottom: 2rem; }
+    .area-header h1 { font-size: 1.5rem; font-weight: 500; color: white; margin-bottom: 0.5rem; }
+    .area-header p { color: var(--text-muted); font-size: 0.95rem; max-width: 600px; }
+
+    .boxes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .box {
+      aspect-ratio: 1;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .box:hover {
+      border-color: var(--text-muted);
+      transform: translateY(-2px);
+    }
+
+    /* Selected State: Clean blue border, no glow */
+    .box.selected {
+      border: 2px solid var(--accent-color);
+      background: #1e293b; /* Very dark blue tint */
+    }
+
+    /* The Box Image */
+    .box-img {
+      width: 60%;
+      height: auto;
+      object-fit: contain;
+      transition: opacity 0.3s;
+      filter: grayscale(100%); /* Optional: makes them look uniform/inactive until selected */
+      opacity: 0.8;
+    }
+
+    .box:hover .box-img, 
+    .box.selected .box-img {
+      filter: grayscale(0%);
+      opacity: 1;
+    }
+
+    /* Unlocked State */
+    .box.unlocked {
+      background: #111;
+      border-style: dashed;
+    }
+    .box.unlocked .box-img {
+      display: none; /* Hide box image when opened */
+    }
+    
+    /* Reveal Icon (Key or Empty) */
+    .reveal-icon {
+      font-size: 2rem;
+      display: none; 
+    }
+    .box.unlocked .reveal-icon {
+      display: block;
+    }
+
+    .box-number {
+      position: absolute;
+      top: 8px; left: 10px;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .vote-count {
+      position: absolute;
+      bottom: 8px; right: 10px;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-main);
+      background: rgba(0,0,0,0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* Modal */
+    .modal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      padding: 2rem;
+      width: 400px;
+      border-radius: 8px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+    
+    @media (max-width: 900px) {
+      body { overflow: auto; height: auto; }
+      .app-container { grid-template-columns: 1fr; height: auto; }
+      .sidebar { order: 2; }
+      .game-area { order: 1; min-height: 50vh; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">
+      <!-- You can put the site logo image here too if you want, currently text -->
+      <i class="fas fa-cube"></i> Private Experiment
+    </div>
+    <div class="top-actions">
+      <button class="btn" onclick="window.location.href='https://pump.fun/profile/GBzsMehK3BhtHaKkLx8UBR9VDdY8oee94N1b9HVvMVeB'">
+        Buy $PRIVATE
+      </button>
+      <button class="btn btn-primary" id="connectWallet">
+        Connect Wallet
+      </button>
+    </div>
+  </header>
+
+  <div class="app-container">
+    
+    <!-- Sidebar / Controls -->
+    <aside class="sidebar">
+      <div class="panel">
+        <span class="panel-label">Current Jackpot</span>
+        <div class="jackpot-val"><i class="fab fa-solana" style="font-size: 0.7em; margin-right: 10px;"></i><span id="jackpotAmount">0.5</span></div>
+        <div class="timer-display">Unlock in: <span id="countdown">14:32</span></div>
+      </div>
+
+      <div class="panel">
+        <span class="panel-label">Vote Distribution</span>
+        <div class="graph-container" id="keyGraph"></div>
+      </div>
+
+      <div class="panel action-area">
+        <div class="selected-box-info">Selected: <span id="selectedBox">None</span></div>
+        <button class="btn btn-primary btn-vote" id="voteButton" disabled>
+          Vote (0.01 SOL)
+        </button>
+      </div>
+      
+      <div style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-top: 1rem;">
+        <a href="https://x.com/Crate_fun" style="color: inherit; margin: 0 8px; text-decoration: none;"><i class="fab fa-twitter"></i></a>
+        <a href="https://t.me/keyexp" style="color: inherit; margin: 0 8px; text-decoration: none;"><i class="fab fa-telegram"></i></a>
+        <br><br>
+        © 2025 Private Experiment
+      </div>
+    </aside>
+
+    <!-- Game Grid -->
+    <main class="game-area">
+      <div class="area-header">
+        <h1>Vote to Open</h1>
+        <p>The community votes to unlock one box every 15 minutes. Find the key to claim the jackpot.</p>
+      </div>
+
+      <div class="boxes-grid" id="boxesGrid">
+        <!-- Boxes generated by JS -->
+      </div>
+    </main>
+    
+  </div>
+
+  <!-- Notification Modal -->
+  <div class="modal" id="notificationModal">
+    <div class="modal-content">
+      <h3 style="margin-bottom: 1rem;" id="modalTitle">Notification</h3>
+      <p style="color: var(--text-muted); margin-bottom: 1.5rem;" id="modalText">Message goes here.</p>
+      <button class="btn" id="closeModal">Close</button>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const totalBoxes = 20;
+      let selectedBoxId = null;
+      let walletConnected = false;
+      let votesCast = {};
+      let nextUnlock = new Date();
+      nextUnlock.setMinutes(nextUnlock.getMinutes() + 15);
+      
+      const boxesGrid = document.getElementById('boxesGrid');
+      const keyGraph = document.getElementById('keyGraph');
+      const selectedBoxDisplay = document.getElementById('selectedBox');
+      const voteButton = document.getElementById('voteButton');
+      const connectWalletBtn = document.getElementById('connectWallet');
+      const countdownDisplay = document.getElementById('countdown');
+      const modal = document.getElementById('notificationModal');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalText = document.getElementById('modalText');
+      const closeModalBtn = document.getElementById('closeModal');
+      const jackpotAmount = document.getElementById('jackpotAmount');
+      
+      function initializeBoxes() {
+        boxesGrid.innerHTML = '';
+        for (let i = 1; i <= totalBoxes; i++) {
+          const box = document.createElement('div');
+          box.classList.add('box');
+          box.dataset.id = i;
+          
+          const boxNumber = document.createElement('div');
+          boxNumber.classList.add('box-number');
+          boxNumber.textContent = i < 10 ? '0'+i : i;
+          
+          // --- CHANGE: Using Image instead of Lock Icon ---
+          const boxImg = document.createElement('img');
+          // Using the specific filename you provided
+          boxImg.src = 'image-removebg-preview (12) (1).png'; 
+          boxImg.classList.add('box-img');
+          
+          // Icon for when unlocked (Key or Open Box)
+          const revealIcon = document.createElement('i');
+          revealIcon.classList.add('fas', 'reveal-icon'); // Class added for styling
+          
+          const voteCount = document.createElement('div');
+          voteCount.classList.add('vote-count');
+          voteCount.textContent = '0';
+          
+          box.appendChild(boxNumber);
+          box.appendChild(boxImg);
+          box.appendChild(revealIcon);
+          box.appendChild(voteCount);
+          
+          box.addEventListener('click', () => selectBox(i));
+          
+          boxesGrid.appendChild(box);
+          votesCast[i] = Math.floor(Math.random() * 10);
+        }
+        updateVoteCounts();
+        initializeKeyGraph();
+      }
+      
+      function initializeKeyGraph() {
+        keyGraph.innerHTML = '';
+        for (let i = 1; i <= totalBoxes; i++) {
+          const bar = document.createElement('div');
+          bar.classList.add('bar');
+          bar.dataset.id = i;
+          const height = calculateProbability(i);
+          bar.style.height = `${height}%`;
+          if(height > 70) bar.classList.add('high-prob');
+          
+          keyGraph.appendChild(bar);
+        }
+      }
+      
+      function calculateProbability(boxId) {
+        const totalVotes = Object.values(votesCast).reduce((a, b) => a + b, 0);
+        if (totalVotes === 0) return 10;
+        const boxVotes = votesCast[boxId];
+        let probability;
+        if (totalVotes > 0) {
+          probability = 100 - ((boxVotes / totalVotes) * 80);
+        } else {
+          probability = 50;
+        }
+        return Math.max(10, probability);
+      }
+      
+      function updateVoteCounts() {
+        for (const [boxId, votes] of Object.entries(votesCast)) {
+          const box = document.querySelector(`.box[data-id="${boxId}"] .vote-count`);
+          if (box) box.textContent = votes;
+        }
+      }
+      
+      function selectBox(boxId) {
+        if (!walletConnected) {
+          showNotification('Login Required', 'Please connect your wallet to interact.');
+          return;
+        }
+        if (selectedBoxId) {
+          const prevBox = document.querySelector(`.box[data-id="${selectedBoxId}"]`);
+          if (prevBox) prevBox.classList.remove('selected');
+        }
+        const box = document.querySelector(`.box[data-id="${boxId}"]`);
+        if (box.classList.contains('unlocked')) {
+          showNotification('Box Open', 'This box has already been opened.');
+          selectedBoxId = null;
+          selectedBoxDisplay.textContent = 'None';
+          voteButton.disabled = true;
+          return;
+        }
+        box.classList.add('selected');
+        selectedBoxId = boxId;
+        selectedBoxDisplay.textContent = 'Box ' + (boxId < 10 ? '0'+boxId : boxId);
+        voteButton.disabled = false;
+      }
+      
+      async function connectWallet() {
+        if (!window.solana || !window.solana.isPhantom) {
+          showNotification('No Wallet', 'Phantom Wallet extension not detected.');
+          return;
+        }
+        try {
+          const resp = await window.solana.connect();
+          if (resp.publicKey) {
+            walletConnected = true;
+            connectWalletBtn.textContent = 'Connected';
+            // Visual feedback on button
+            connectWalletBtn.style.backgroundColor = '#10b981'; // Green
+            connectWalletBtn.style.borderColor = '#10b981';
+            showNotification('Connected', 'Wallet connected successfully.');
+          }
+        } catch (err) {
+          showNotification('Error', 'Connection rejected.');
+        }
+      }
+      
+      function vote() {
+        if (!selectedBoxId || !walletConnected) return;
+        votesCast[selectedBoxId] += 1;
+        updateVoteCounts();
+        updateKeyGraph();
+        showNotification('Vote Cast', `Vote recorded for Box ${selectedBoxId}.`);
+        
+        const box = document.querySelector(`.box[data-id="${selectedBoxId}"]`);
+        box.classList.remove('selected');
+        selectedBoxId = null;
+        selectedBoxDisplay.textContent = 'None';
+        voteButton.disabled = true;
+        
+        const currentJackpot = parseFloat(jackpotAmount.textContent);
+        jackpotAmount.textContent = (currentJackpot + 0.1).toFixed(1);
+      }
+      
+      function updateKeyGraph() {
+        for (let i = 1; i <= totalBoxes; i++) {
+          const bar = document.querySelector(`.bar[data-id="${i}"]`);
+          if (bar) {
+            const height = calculateProbability(i);
+            bar.style.height = `${height}%`;
+            if(height > 70) bar.classList.add('high-prob');
+            else bar.classList.remove('high-prob');
+          }
+        }
+      }
+      
+      function showNotification(title, message) {
+        modalTitle.textContent = title;
+        modalText.textContent = message;
+        modal.classList.add('active');
+      }
+      
+      function closeNotification() {
+        modal.classList.remove('active');
+      }
+      
+      function updateCountdown() {
+        const now = new Date();
+        const diff = nextUnlock - now;
+        if (diff <= 0) {
+          unlockRandomBox();
+          nextUnlock = new Date();
+          nextUnlock.setMinutes(nextUnlock.getMinutes() + 15);
+        }
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        countdownDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      }
+      
+      function unlockRandomBox() {
+        const totalVotes = Object.values(votesCast).reduce((a, b) => a + b, 0);
+        const inverseVotes = {};
+        for (const [boxId, votes] of Object.entries(votesCast)) {
+          const box = document.querySelector(`.box[data-id="${boxId}"]`);
+          if (box && box.classList.contains('unlocked')) continue;
+          inverseVotes[boxId] = totalVotes > 0 ? 1 - (votes / totalVotes) : 1;
+        }
+        
+        const available = Object.keys(inverseVotes);
+        if(available.length === 0) return;
+        
+        const boxToUnlock = available[Math.floor(Math.random() * available.length)];
+        const box = document.querySelector(`.box[data-id="${boxToUnlock}"]`);
+        
+        if (box) {
+          box.classList.add('unlocked');
+          
+          const revealIcon = box.querySelector('.reveal-icon');
+          
+          const keyFound = Math.random() < 0.05;
+          if (keyFound) {
+            revealIcon.className = 'fas fa-key reveal-icon'; // Show Key
+            revealIcon.style.color = '#10b981';
+            showNotification('Jackpot!', `Private key found in Box ${boxToUnlock}!`);
+            jackpotAmount.textContent = '5.0';
+            setTimeout(resetAllBoxes, 5000);
+          } else {
+            revealIcon.className = 'fas fa-box-open reveal-icon'; // Show Empty box
+            revealIcon.style.color = '#71717a';
+          }
+        }
+      }
+      
+      function resetAllBoxes() {
+        const boxes = document.querySelectorAll('.box');
+        boxes.forEach(box => {
+          box.classList.remove('unlocked');
+          // Reset icon visibility is handled by CSS (reveal-icon is display:none unless box is unlocked)
+        });
+        for (let i = 1; i <= totalBoxes; i++) votesCast[i] = Math.floor(Math.random() * 5);
+        updateVoteCounts();
+        updateKeyGraph();
+      }
+      
+      connectWalletBtn.addEventListener('click', connectWallet);
+      voteButton.addEventListener('click', vote);
+      closeModalBtn.addEventListener('click', closeNotification);
+      
+      initializeBoxes();
+      updateCountdown();
+      setInterval(updateCountdown, 1000);
+      
+      setInterval(() => {
+        const randomBox = Math.floor(Math.random() * totalBoxes) + 1;
+        votesCast[randomBox] += 1;
+        updateVoteCounts();
+        updateKeyGraph();
+      }, 5000);
+    });
+  </script>
+</body>
+</html>
